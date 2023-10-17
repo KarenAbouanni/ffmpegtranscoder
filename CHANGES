@@ -1,0 +1,103 @@
+Version 0.4.1 (30.04.2020)
+
+- Fixed parser issue with custom ffmpeg arguments that contain nested quotation marks with spaces
+- Clarified wording in the --help output.
+- Marked as compatible with Python 3.8
+
+Version 0.4.0 (04.12.2019)
+
+- Fixed issue with deleting temporary files at the end of the encoding process
+- Write encoder parameters to the matroska container using a custom metadata tag.
+  The full encoder settings string is written to the VIDEO_ENCODER_SETTINGS tag.
+  This should make it easier to determine the used encoder parameters in the future.
+
+Version 0.3.2 (28.11.2019)
+
+- Prepare public release
+- Improved README, --help output.
+
+Version 0.3.0 (28.11.2019)
+
+- New option --limit-encodes NUMBER. Only run up to NUMBER scene encodes in total. If the limit is hit, no new scene
+  encodes will start and the program will exit. All scenes in all input files count towards this limit. Merging into
+  the final output result will not be performed, if this option causes the scene list to be incomplete. For the sake
+  of this option, the two encodes required for a Two-Pass encode of a scene count as one encode towards this limit.
+- New option --crop TOP BOTTOM LEFT RIGHT. Uses the ffmpeg crop filter to trim the given pixels off the video border.
+  Can be given multiple times. If so, each input file gets it’s own crop parameters in the order both are given on the
+  command line. If more input files are given, the last --crop parameters are used for all remaining input videos.
+- Sanitize user input for numbers. Options requiring positive numbers now check that no negative numbers are supplied.
+  The Scene cut threshold now checks that the input is in the range (0, 1].
+- Updated the --help output
+- Updated the default encoder parameters. The default preset is now tuned for high quality SD encodes.
+
+Version 0.2.0 (17.11.2019)
+
+- Split first pass from second pass for two-pass encoding and use a different task scheduler for two-pass encodes.
+  - Use the first-pass log size as simple metric to estimate
+    second-pass runtime and schedule the second passes accordingly.
+    Large logs indicate long and/or complex scenes that take long to encode.
+  - Start encoding long running scenes first, which will result in better multicore usage at the end of the processing.
+  - It avoids starting long scenes, like the credits, at the end of the processs, and therefore lessens the impact of
+    a single, long encode delaying the whole process. With this scheduling approach, it is way more likely that the
+    last running encodings will be encoding short and easy scenes and therefore having less overall delay.
+
+Version 0.1.3 (17.11.2019)
+
+- Fixed broken Two-pass log file moving.
+- Fixed skipping the first pass of two-pass encodes, if that is already finished.
+- Always overwrite aborted single-pass or second-pass encodes.
+
+
+Version 0.1.2 (17.11.2019)
+
+- Gracefully handle missing input files
+- Enable @-notation in the argument parser to load arguments from files
+- Move first pass encoder logs to the completed temporary directory, so that completed first passes can be skipped.
+
+
+Version 0.1.1 (16.11.2019)
+
+- Replaced -2/--two-pass with -1/--single-pass. Two-Pass encoding is the new default.
+- Per default, use 8 concurrent encodes instead of 2
+- Removed tile usage from the default encoder parameters, due to possible frame curruptions
+- Removed threading support from the default encoder parameters,
+  because multiple encoder instances scale more consistently.
+
+
+Version 0.1.0 (12.11.2019)
+
+- Initial version.
+
+-Implemented features:
+  - Command line interface
+  - Transcode Videos to AV1 using libaom-av1
+  - Single-Pass and Two-Pass encoding mode (currently defaulting to Single-Pass)
+  - Scene cut detection with customizable threshold
+  - Scene length control by providing a lower bound to the individual scene length.
+    Shorter detected scenes will be merged to improve encoding efficiency
+  - Scene-parallel encoding using multiple ffmpeg instances
+  - Concurrency control by a configurable upper limit of parallel instances
+  - Deinterlacing support using the yadif filter.
+  - Passing raw, custom encoder parameters to ffmpeg, both global ffmpeg options and encoder-specific options
+  - Resumable encodes: Finished scenes are collected in a specific directory. If the encoding is aborted and
+    restarted, already present data is skipped when the encoding process is restarted.
+  - Customizable data directories
+  - Customizable ffmpeg binary location and name
+  - Integration with Cutelog for log display purposes
+  - Dumping of parsed scenes for inspection purposes
+  - Optional dumping of generated ffmpeg command lines for inspection purposes
+
+- Limitations and missing features:
+  - The output video name is automatically generated and currently can’t be changed.
+  - The output will always be muxed into a matroska container. Raw stream output or other containers are unsupported.
+    Use mkvextract or the muxer of your choice to remux the output video.
+  - Due to the output file handling, encoding multiple videos with names differing only in the extension
+    (e.g. "video.mp4" and "video.avi") will cause a naming conflict and abort the encoding process
+    in the final step, if central data storage is used (with --output-dir or --temp-dir).
+    The encoding in this situation should be resumable, if the videos are processed individually.
+  - If a central data storage is specified, (with --output-dir or --temp-dir),
+    files with the same name but originating from different source directories will collide in the same way
+    as in the point above.
+  - A maximal scene length cannot be specified. This is planned, but the algorithm for this is not yet designed.
+  - No GUI
+  
